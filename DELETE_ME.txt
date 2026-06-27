@@ -1,0 +1,285 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║         ARYA InterviewMate — SETUP GUIDE  (delete after setup)      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  FILE MAP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  arya-interviewmate/
+  ├── DELETE_ME.txt           ← you are here
+  ├── .gitignore              ← keeps .env out of GitHub
+  ├── README.md
+  ├── docker-compose.yml
+  │
+  ├── backend/
+  │   ├── .env.example        ← COPY to .env — add your GROQ key here
+  │   ├── .env                ← YOUR secrets (never commit this)
+  │   ├── main.py             ← FastAPI entry point (load_dotenv first)
+  │   ├── requirements.txt
+  │   ├── services/gemini.py  ← all Groq AI calls
+  │   └── routers/
+  │       ├── auth.py
+  │       ├── interviews.py
+  │       ├── analytics.py
+  │       ├── leaderboard.py
+  │       ├── coach.py        ← /api/coach/plan  +  /api/coach/chat
+  │       ├── resume.py
+  │       └── admin.py
+  │
+  └── frontend/
+      ├── .env.example        ← COPY to .env — set API URL
+      └── src/
+          ├── components/
+          │   ├── LandingPage.tsx
+          │   ├── auth/
+          │   ├── dashboard/
+          │   ├── interview/  ← Setup, Session, Report, History
+          │   ├── analytics/
+          │   ├── leaderboard/
+          │   ├── coach/      ← interactive AI chat + weekly plan tabs
+          │   ├── admin/
+          │   ├── layout/     ← Sidebar, AppLayout
+          │   └── ui/         ← Button, Input, ScoreRing, Badge, etc.
+          ├── services/api.ts ← all axios calls (includes coach chat)
+          └── types/index.ts
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 1 — INSTALL REQUIRED SOFTWARE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Python 3.11+ (3.12 confirmed working)
+  → https://www.python.org/downloads/
+  → Windows: tick "Add Python to PATH" during install
+  → Verify: python --version
+
+  Node.js 20+ LTS
+  → https://nodejs.org/en/download
+  → Verify: node --version
+
+  Git
+  → https://git-scm.com/downloads
+  → Verify: git --version
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 2 — GET YOUR FREE GROQ API KEY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. Go to https://console.groq.com
+  2. Sign in with Google or GitHub (free, no credit card)
+  3. Click "API Keys" in the left sidebar
+  4. Click "Create API Key"
+  5. Copy it immediately — starts with gsk_
+
+  Free tier: 14,400 requests/day on llama-3.1-8b-instant
+             500 requests/day on llama-3.3-70b-versatile
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 3 — BACKEND SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  cd arya-interviewmate/backend
+
+  # Create & activate virtual environment
+  python3 -m venv venv
+  source venv/bin/activate          # Windows: venv\Scripts\activate
+
+  # Install packages
+  pip install -r requirements.txt
+
+  # Create your .env file
+  cp .env.example .env
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 4 — FILL IN backend/.env
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Open backend/.env in any text editor and set:
+
+  ┌────────────────────────────────────────────────────────────────┐
+  │  GROQ_API_KEY=gsk_paste-your-actual-key-here                   │
+  │  GROQ_MODEL=llama-3.3-70b-versatile                            │
+  │  SECRET_KEY=make-up-any-long-string-at-least-32-chars          │
+  │  DATABASE_URL=sqlite:///./arya_interviewmate.db                 │
+  └────────────────────────────────────────────────────────────────┘
+
+  ⚠️  CRITICAL: The file must be named exactly  .env  (not .env.txt,
+      not .env.example). Check with:  ls -la  (Mac/Linux)
+      or look for it in File Explorer with "show hidden files" on.
+
+  ⚠️  NEVER commit .env to GitHub. The .gitignore already blocks it.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 5 — START BACKEND
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # MUST be run from inside backend/ folder
+  cd backend
+  source venv/bin/activate
+  uvicorn main:app --reload --port 8001
+
+  ✅ You should see:
+     INFO: Application startup complete.
+     INFO: Uvicorn running on http://0.0.0.0:8001
+
+  Test: http://localhost:8001/api/health → {"status":"healthy"}
+  Docs: http://localhost:8001/api/docs
+
+  ⚠️  Always run uvicorn from INSIDE the backend/ directory.
+      Running from the parent folder means .env won't be found.
+
+  Quick test your Groq key:
+  python3 -c "
+  from dotenv import load_dotenv; load_dotenv()
+  import os; from groq import Groq
+  c = Groq(api_key=os.getenv('GROQ_API_KEY',''))
+  r = c.chat.completions.create(model='llama-3.3-70b-versatile',messages=[{'role':'user','content':'hi'}])
+  print('GROQ OK:', r.choices[0].message.content)
+  "
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 6 — FRONTEND SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  cd arya-interviewmate/frontend
+  npm install
+  cp .env.example .env
+
+  Open frontend/.env and set:
+  REACT_APP_API_URL=http://localhost:8001
+
+  npm start
+  → Opens http://localhost:3000 automatically
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 7 — MAKE YOURSELF ADMIN (optional)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  cd backend  (with venv active)
+  python3 -c "
+  from dotenv import load_dotenv; load_dotenv()
+  from database import SessionLocal
+  from models import User
+  db = SessionLocal()
+  u = db.query(User).filter(User.email=='YOUR@EMAIL.COM').first()
+  u.is_admin = True; db.commit()
+  print('Done —', u.email, 'is now admin')
+  "
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 8 — PUSH TO GITHUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Create repo at: https://github.com/new  (Private recommended)
+  Do NOT add README/.gitignore via GitHub — we have those.
+
+  cd arya-interviewmate
+  git init
+  git add .
+  git commit -m "Initial commit"
+  git branch -M main
+  git remote add origin https://github.com/YOUR_USERNAME/arya-interviewmate.git
+  git push -u origin main
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 9 — DEPLOY BACKEND TO RENDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  → https://render.com  (free tier)
+  1. New → Web Service → connect GitHub repo
+  2. Root Directory:  backend
+  3. Build Command:   pip install -r requirements.txt
+  4. Start Command:   uvicorn main:app --host 0.0.0.0 --port $PORT
+  5. Add env vars:
+     GROQ_API_KEY  = gsk_your-key
+     GROQ_MODEL    = llama-3.3-70b-versatile
+     SECRET_KEY    = long-random-string
+     DATABASE_URL  = sqlite:///./arya_interviewmate.db
+  6. Deploy → copy your URL (e.g. https://arya-api.onrender.com)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 10 — DEPLOY FRONTEND TO VERCEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  → https://vercel.com  (free tier)
+  1. New Project → import GitHub repo
+  2. Root Directory:  frontend
+  3. Add env var:
+     REACT_APP_API_URL = https://arya-api.onrender.com
+  4. Deploy
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STEP 11 — UPDATE CORS FOR YOUR LIVE URL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Open backend/main.py, find allow_origins and add your Vercel URL:
+
+  allow_origins=[
+    "http://localhost:3000",
+    "https://YOUR-APP.vercel.app",   ← add your real URL
+  ]
+
+  git add backend/main.py
+  git commit -m "Add production CORS origin"
+  git push
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ALL LINKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Groq API key:   https://console.groq.com/keys
+  Groq models:    https://console.groq.com/docs/models
+  GitHub:         https://github.com/new
+  Render:         https://render.com
+  Vercel:         https://vercel.com
+  Python:         https://www.python.org/downloads/
+  Node.js:        https://nodejs.org/en/download
+
+  Local URLs when running:
+  Frontend:       http://localhost:3000
+  Backend:        http://localhost:8001
+  API docs:       http://localhost:8001/api/docs
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  "GROQ_API_KEY environment variable is not set"
+  → You're running uvicorn from the WRONG directory
+  → Must run from inside backend/: cd backend then uvicorn ...
+  → OR your .env file doesn't exist — check with: ls -la backend/
+  → Verify key loads: python3 -c "from dotenv import load_dotenv; load_dotenv(); import os; print(os.getenv('GROQ_API_KEY','NOT FOUND'))"
+
+  AI feedback shows 50 for everything (fallback mode)
+  → Groq key is invalid or not loaded — see above
+  → Check terminal for [Groq] error lines when submitting an answer
+
+  "proxies" keyword error
+  → Old groq SDK version — run: pip install --upgrade groq
+
+  npm install fails with ERESOLVE
+  → Run: npm install --legacy-peer-deps
+
+  CORS errors in browser
+  → Add your frontend URL to allow_origins in backend/main.py
+
+  Port 8001 already in use
+  → Kill it: lsof -ti:8001 | xargs kill (Mac/Linux)
+             netstat -ano | findstr 8001 (Windows)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Delete this file once your app is running. Good luck.
